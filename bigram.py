@@ -110,12 +110,13 @@ m  = model.to(device)
 
 
 # create a PyTorch optimazer
-optimizer = torch.optim.AdamW(m.parameters(), lr=1e-3)
+learning_rate = 1e-3
+optimizer = torch.optim.AdamW(m.parameters(), lr=learning_rate)
 
 for iter in range(max_iters):
 
     # every once in a while evaluate the loss on train on validation sets
-    if iter % eval_interval:
+    if iter % eval_interval == 0:
        losses = estimate_loss()
        print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
@@ -131,4 +132,4 @@ for iter in range(max_iters):
 
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
-print(decode(m.generate(idx = context), max_new_tokens=400)[0].tolist()))
+print(decode(m.generate(idx = context, max_new_tokens=400)[0].tolist()))
