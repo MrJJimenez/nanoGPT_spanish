@@ -1,1 +1,1 @@
-# nanoGPT_spanish
+# nanoGPT_spanish tutorial
