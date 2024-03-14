@@ -13,7 +13,8 @@ eval_iters = 200
 n_embd = 32
 head_size = 16
 n_head = 4
-n_layer =4
+n_layer = 4
+dropout = 0.7
 #---------------
 
 torch.manual_seed(1337)
@@ -81,6 +82,8 @@ class Head(nn.Module):
         self.query = nn.Linear(n_embd, head_size, bias=False)
         self.value = nn.Linear(n_embd, head_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+
+        self.dropout = nn.Dropout(dropout)
     
     def forward(self, x):
         B,T,C = x.shape
@@ -90,6 +93,7 @@ class Head(nn.Module):
         wei = q @ k.transpose(-2,-1)*C**-0.5 # (B, T, C) @ (B, C, T) ---> (B, T, T)
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf')  ) # (B, T, T)
         wei = F.softmax(wei, dim=-1) # (B, T, T)
+        wei = self.dropout(wei)
         # perform weighted aggregation of the values
         v = self.value(x)
         out = wei @ v
@@ -101,10 +105,11 @@ class MultiHeadAttention(nn.Module):
         super().__init__()
         self.heads =  nn.ModuleList([Head(head_size) for _ in range(num_heads)])
         self.proj = nn.Linear(n_embd, n_embd)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         out = torch.cat([h(x) for h in self.heads], dim=-1)
-        out = self.proj(out)
+        out = seld.dropout(self.proj(out))
         return out
     
 
@@ -116,6 +121,7 @@ class FeedForward(nn.Module):
             nn.Linear(n_embd, 4 * n_embd),
             nn.ReLU(),
             nn.Linear(4 * n_embd, n_embd),
+            nn.Dropout(dropout),
         )
     
     def forward(self, x):
