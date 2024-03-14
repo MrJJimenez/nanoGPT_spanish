@@ -12,6 +12,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
 n_embd = 32
 head_size = 16
+n_head = 4
+n_layer =4
 #---------------
 
 torch.manual_seed(1337)
@@ -144,13 +146,8 @@ class BigramLanguageModel(nn.Module):
         # each token directly reads off the logits for the next tokon from a lookup
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(vocab_size, n_embd)
-        self.blocks = nn.Sequential(
-            Block(n_embd, 4),
-            Block(n_embd, 4),
-            Block(n_embd, 4),
-            Block(n_embd, 4),
-            nn.LayerNorm(n_embd),
-        )
+        self.blocks = nn.Sequential(*[Block(n_embd,n_head=n_head) for _ in range(n_layer)] )
+        self.ln_f = nn.LayerNorm(n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, idx, targets=None):
@@ -158,8 +155,9 @@ class BigramLanguageModel(nn.Module):
         # idx and targets are both (B,T) tensor of integers
         tk_emb = self.token_embedding_table(idx) # Batch(4), Time(block_size), Channel(n_embd_size), (B, T, C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=device)) # (T, C)
-        x = tk_emb + pos_emb # (B,T,C)
-        x = self.blocks(x)
+        x = tk_emb + pos_emb # (B, T, C)
+        x = self.blocks(x) # (B, T, C)
+        x = self.ln_f(x) # (B, T, C)
         logits = self.lm_head(x)  # (Batch, Time, Vocab_size)
         
         if targets is None:
