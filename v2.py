@@ -11,10 +11,10 @@ learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
 n_embd = 32
-head_size = 16
-n_head = 4
-n_layer = 4
-dropout = 0.7
+head_size = 4
+n_head = 16
+n_layer = 6
+dropout = 0.2
 #---------------
 
 torch.manual_seed(1337)
@@ -109,7 +109,7 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, x):
         out = torch.cat([h(x) for h in self.heads], dim=-1)
-        out = seld.dropout(self.proj(out))
+        out = self.dropout(self.proj(out))
         return out
     
 
@@ -195,7 +195,7 @@ class BigramLanguageModel(nn.Module):
     
 
 model = BigramLanguageModel()
-
+model = model.to(device)
 
 # create a PyTorch optimazer
 learning_rate = 1e-3
