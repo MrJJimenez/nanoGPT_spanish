@@ -13,7 +13,7 @@ eval_iters = 200
 n_embd = 32
 head_size = 4
 n_head = 16
-n_layer = 6
+n_layer = 1
 dropout = 0.2
 #---------------
 
